@@ -1,0 +1,240 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom right, #f5f0e1, #e3d5ca);
+  color: #3e3e3e;
+  transition: background 0.5s ease-in-out;
+}
+
+#container {
+  max-width: 650px;
+  margin: 60px auto;
+  background-color: #fff8f0;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+}
+
+h1 {
+  text-align: center;
+  color: #6f4e37;
+  margin-bottom: 25px;
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  padding: 12px 15px;
+  font-size: 1em;
+  border: 1px solid #d3bfa4;
+  border-radius: 8px;
+  background-color: #fffdf9;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.3s ease;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: #b89b74;
+  outline: none;
+}
+
+button {
+  margin-top: 1vh;
+  display: inline-block;
+  background-color: #c8a97e;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  font-size: 1em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #b78c66;
+  transform: translateY(-2px);
+}
+
+#response {
+  margin-top: 25px;
+  padding: 20px;
+  background-color: #fdf7f1;
+  border-left: 4px solid #d6b790;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  font-size: 0.95em;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.big-box-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 94%;
+  margin: 20px auto;
+}
+
+.big-box {
+  flex: 1;
+  height: 50vh;
+  background-color: #f0e6d2;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #6f4e37;
+  user-select: none;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.inner-box {
+  width: 90%;
+  height: 90%;
+  margin-top: 15px;
+  background-color: #fff8f0;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  padding: 10px;
+  font-weight: normal;
+  font-size: 1em;
+  color: #3e3e3e;
+}
+
+#manualMoveControls {
+  margin-top: 20px;
+}
+
+#manualMoveControls input {
+  margin-right: 5px;
+  padding: 5px;
+}
+
+/* Style the axis selection form */
+#axisForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fdf7f1;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+#axisForm label {
+  font-weight: 600;
+  color: #6f4e37;
+  margin-bottom: 6px;
+}
+
+#axisForm input[type="text"] {
+  padding: 10px 12px;
+  border: 1.5px solid #d3bfa4;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.3s ease;
+  background-color: #fffdf9;
+  color: #3e3e3e;
+}
+
+#axisForm input[type="text"]:focus {
+  border-color: #b89b74;
+  outline: none;
+}
+
+#axisForm button[type="submit"] {
+  align-self: flex-start;
+  background-color: #c8a97e;
+  padding: 12px 28px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(200, 169, 126, 0.3);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#axisForm button[type="submit"]:hover {
+  background-color: #b78c66;
+  transform: translateY(-2px);
+}
+
+/* Unused columns container */
+#unusedColumns {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #fff8f0;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Buttons for unused columns */
+#unusedColumns button {
+  background-color: #d9c4a8;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  color: #5a3e1b;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+#unusedColumns button:hover {
+  background-color: #c8a97e;
+  color: #3e2f12;
+  transform: scale(1.05);
+}
+
+/* Plot container */
+#plot {
+  margin-top: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  background-color: #fff8f0;
+  padding: 10px;
+  min-height: 450px;
+}
+
+/* Scrollbar style for unused columns container */
+#unusedColumns::-webkit-scrollbar {
+  width: 6px;
+}
+
+#unusedColumns::-webkit-scrollbar-thumb {
+  background-color: #c8a97e;
+  border-radius: 3px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+  #axisForm {
+    padding: 10px;
+  }
+
+  #unusedColumns {
+    max-height: 120px;
+    gap: 8px;
+  }
+}

@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-// import { queueFunctionCall } from "../../mcp-web/server.js"; // adjust path
 const server = new McpServer({
     name: "bhallaServer",
     version: "1.0.0",
@@ -10,6 +9,7 @@ const server = new McpServer({
         tools: {},
     },
 });
+let cachedHeaders = null;
 server.tool("list-csv-headers", {}, async () => {
     try {
         const response = await fetch("http://localhost:3000/csv-headers");
@@ -18,6 +18,8 @@ server.tool("list-csv-headers", {}, async () => {
         }
         const data = await response.json();
         const headers = data.headers;
+        cachedHeaders = headers; // store in cache
+        console.log(headers);
         return {
             content: headers.map(header => ({
                 type: "text",
@@ -42,15 +44,17 @@ server.tool("set-graph-axes", {
     yParams: z.array(z.string()).describe("Columns to use on the Y axis"),
 }, async ({ xParams, yParams }) => {
     try {
-        // 1. Fetch valid headers from backend
-        const headersRes = await fetch("http://localhost:3000/csv-headers");
-        if (!headersRes.ok) {
-            throw new Error(`Failed to fetch headers. Status: ${headersRes.status}`);
+        // Ensure headers are fetched
+        if (!cachedHeaders) {
+            const headersRes = await fetch("http://localhost:3000/csv-headers");
+            if (!headersRes.ok) {
+                throw new Error(`Failed to fetch headers. Status: ${headersRes.status}`);
+            }
+            const data = await headersRes.json();
+            cachedHeaders = data.headers;
         }
-        const { headers } = await headersRes.json();
-        // 2. Filter for valid parameters
-        const validX = xParams.filter(param => headers.includes(param));
-        const validY = yParams.filter(param => headers.includes(param));
+        const validX = xParams.filter(param => cachedHeaders.includes(param));
+        const validY = yParams.filter(param => cachedHeaders.includes(param));
         if (validX.length === 0 && validY.length === 0) {
             return {
                 content: [
@@ -61,7 +65,6 @@ server.tool("set-graph-axes", {
                 ],
             };
         }
-        // 3. Send valid params to frontend
         await fetch("http://localhost:3000/api/set-input-params", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

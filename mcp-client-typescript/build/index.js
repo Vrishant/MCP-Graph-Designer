@@ -31,7 +31,7 @@ export class MCPClient {
         this.messages = [
             {
                 role: "system",
-                content: `You are a helpful assistant connected to tools. Do not answer until you have obtained the headers.`,
+                content: `You are a helpful assistant connected to tools. Do not call graph tool until you have obtained the headers.`,
             },
         ];
     }
@@ -82,36 +82,82 @@ export class MCPClient {
         //     content: query,
         //   },
         // ];
-        const completion = await this.openai.chat.completions.create({
-            model: "gpt-4o-mini", // Or "gpt-4-turbo" / "gpt-3.5-turbo"
+        //Single tool call
+        // const completion = await this.openai.chat.completions.create({
+        //   model: "gpt-4o-mini", // Or "gpt-4-turbo" / "gpt-3.5-turbo"
+        //   messages: this.messages,
+        //   tools: this.tools,
+        //   max_tokens: 500,
+        //   tool_choice: "auto",
+        // });
+        // const responseMessage = completion.choices[0].message;
+        // const finalText: string[] = [];
+        // // let finalReply = "";
+        // if (responseMessage.tool_calls) {
+        //   for (const toolCall of responseMessage.tool_calls) {
+        //     const toolName = toolCall.function.name;
+        //     const args = JSON.parse(toolCall.function.arguments || "{}");
+        //     const result = await this.mcp.callTool({
+        //       name: toolName,
+        //       arguments: args,
+        //     });
+        //     finalText.push(`[Tool: ${toolName}]`);
+        //     if (Array.isArray(result.content)) {
+        //       for (const item of result.content) {
+        //         if (typeof item === "object" && item !== null && "type" in item && item.type === "text") {
+        //           finalText.push((item as { type: string; text: string }).text);
+        //         }
+        //       }
+        //     } else {
+        //       finalText.push(String(result.content)); // fallback
+        //     }
+        //     this.messages.push(responseMessage);
+        //     const toolContent = JSON.stringify(result.content);
+        //     const truncatedToolContent = toolContent.length > 1000
+        //       ? toolContent.slice(0, 1000) + "... [truncated]"
+        //       : toolContent;
+        //     this.messages.push({
+        //       role: "tool",
+        //       tool_call_id: toolCall.id,
+        //       content: truncatedToolContent,
+        //     });
+        //     this.messages = this.trimMessages(this.messages);
+        //     const secondResponse = await this.openai.chat.completions.create({
+        //       model: "gpt-4o-mini",
+        //       messages: this.messages,
+        //       max_tokens: 500,
+        //     });
+        //     const finalResponse = secondResponse.choices[0].message;
+        //     // if (finalResponse.content) {
+        //     //   finalText.push(finalResponse.content);
+        //     // }
+        //     if (finalResponse.content) {
+        //       this.messages.push(finalResponse); // store final reply too
+        //       finalText.push(finalResponse.content);
+        //     }
+        //   }
+        // } else if (responseMessage.content) {
+        //   finalText.push(responseMessage.content);
+        // }
+        // return finalText.join("\n");
+        let response = await this.openai.chat.completions.create({
+            model: "gpt-4o-mini",
             messages: this.messages,
             tools: this.tools,
             max_tokens: 500,
             tool_choice: "auto",
         });
-        const responseMessage = completion.choices[0].message;
-        const finalText = [];
-        // let finalReply = "";
-        if (responseMessage.tool_calls) {
-            for (const toolCall of responseMessage.tool_calls) {
+        while (response.choices[0].message.tool_calls) {
+            const toolCalls = response.choices[0].message.tool_calls;
+            this.messages.push(response.choices[0].message);
+            for (const toolCall of toolCalls) {
                 const toolName = toolCall.function.name;
                 const args = JSON.parse(toolCall.function.arguments || "{}");
+                console.log(`Calling tool: ${toolName} with args:`, args);
                 const result = await this.mcp.callTool({
                     name: toolName,
                     arguments: args,
                 });
-                finalText.push(`[Tool: ${toolName}]`);
-                if (Array.isArray(result.content)) {
-                    for (const item of result.content) {
-                        if (typeof item === "object" && item !== null && "type" in item && item.type === "text") {
-                            finalText.push(item.text);
-                        }
-                    }
-                }
-                else {
-                    finalText.push(String(result.content)); // fallback
-                }
-                this.messages.push(responseMessage);
                 const toolContent = JSON.stringify(result.content);
                 const truncatedToolContent = toolContent.length > 1000
                     ? toolContent.slice(0, 1000) + "... [truncated]"
@@ -121,60 +167,23 @@ export class MCPClient {
                     tool_call_id: toolCall.id,
                     content: truncatedToolContent,
                 });
-                this.messages = this.trimMessages(this.messages);
-                const secondResponse = await this.openai.chat.completions.create({
-                    model: "gpt-4o-mini",
-                    messages: this.messages,
-                    max_tokens: 500,
-                });
-                const finalResponse = secondResponse.choices[0].message;
-                // if (finalResponse.content) {
-                //   finalText.push(finalResponse.content);
-                // }
-                if (finalResponse.content) {
-                    this.messages.push(finalResponse); // store final reply too
-                    finalText.push(finalResponse.content);
-                }
             }
+            this.messages = this.trimMessages(this.messages);
+            response = await this.openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: this.messages,
+                tools: this.tools,
+                max_tokens: 500,
+                tool_choice: "auto",
+            });
         }
-        else if (responseMessage.content) {
-            finalText.push(responseMessage.content);
+        const finalMessage = response.choices[0].message;
+        console.log("Final assistant response:", finalMessage.content);
+        if (finalMessage.content) {
+            this.messages.push(finalMessage);
+            return finalMessage.content;
         }
-        return finalText.join("\n");
-        //For a single reply without any tools
-        // if (responseMessage.tool_calls) {
-        //   for (const toolCall of responseMessage.tool_calls) {
-        //     const toolName = toolCall.function.name;
-        //     const args = JSON.parse(toolCall.function.arguments || "{}");
-        //     const result = await this.mcp.callTool({
-        //       name: toolName,
-        //       arguments: args,
-        //     });
-        //     messages.push(responseMessage);
-        //     const toolContent = JSON.stringify(result.content);
-        //     const truncatedToolContent = toolContent.length > 1000
-        //       ? toolContent.slice(0, 1000) + "... [truncated]"
-        //       : toolContent;
-        //     messages.push({
-        //       role: "tool",
-        //       tool_call_id: toolCall.id,
-        //       content: truncatedToolContent,
-        //     });
-        //     messages = this.trimMessages(messages);
-        //     const secondResponse = await this.openai.chat.completions.create({
-        //       model: "gpt-4o-mini",
-        //       messages,
-        //       max_tokens: 500,
-        //     });
-        //     const finalResponse = secondResponse.choices[0].message;
-        //     if (finalResponse.content) {
-        //       finalReply = finalResponse.content;
-        //     }
-        //   }
-        // } else if (responseMessage.content) {
-        //   finalReply = responseMessage.content;
-        // }
-        // return finalReply;
+        return "[No response content received]";
     }
     async cleanup() {
         await this.mcp.close();

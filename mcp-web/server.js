@@ -66,9 +66,36 @@ app.all("/query", (req, res, next) => {
 
 // Endpoint to receive move commands from MCP server
 
-app.post("/api/set-input-params", (req, res) => {
-  const { xParams, yParams } = req.body;
+// app.post("/api/set-input-params", (req, res) => {
+//   const { xParams, yParams } = req.body;
 
+//   if (!Array.isArray(xParams) || !Array.isArray(yParams)) {
+//     return res.status(400).json({ error: "xParams and yParams must be arrays" });
+//   }
+
+//   latestAxisParams = { xParams, yParams };
+//   res.json({ status: "ok" });
+// });
+
+// app.get("/api/set-input-params", (req, res) => {
+//   if (latestAxisParams) {
+//     res.json(latestAxisParams);
+//     latestAxisParams = null;
+//   } else {
+//     res.json({});
+//   }
+// });
+
+app.post("/api/set-input-params", (req, res) => {
+  const { function: fn, params, xParams, yParams } = req.body;
+
+  if (fn && typeof fn === "string") {
+    // Function call with optional parameters
+    latestAxisParams = { function: fn, params: params || {} };
+    return res.json({ status: "function received" });
+  }
+
+  // Fallback: just setting axis parameters
   if (!Array.isArray(xParams) || !Array.isArray(yParams)) {
     return res.status(400).json({ error: "xParams and yParams must be arrays" });
   }
@@ -76,7 +103,6 @@ app.post("/api/set-input-params", (req, res) => {
   latestAxisParams = { xParams, yParams };
   res.json({ status: "ok" });
 });
-
 app.get("/api/set-input-params", (req, res) => {
   if (latestAxisParams) {
     res.json(latestAxisParams);
@@ -85,6 +111,7 @@ app.get("/api/set-input-params", (req, res) => {
     res.json({});
   }
 });
+
 
 
 

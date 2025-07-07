@@ -1,0 +1,138 @@
+import express from "express";
+import cors from "cors";
+import fetch from "node-fetch";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// ------------------ ✅ Command Queue ------------------
+let pendingCommand: { function: string; params: Record<string, any> } | null = null;
+
+// Endpoint polled by frontend
+app.get("/api/poll-command", (_req, res) => {
+  if (pendingCommand) {
+    res.json(pendingCommand);
+    pendingCommand = null; // Clear after sending
+  } else {
+    res.status(204).send(); // No content
+  }
+});
+
+// Helper to push a command to the queue
+function pushCommand(functionName: string, params: Record<string, any> = {}) {
+  pendingCommand = { function: functionName, params };
+}
+
+// ------------------ ✅ CSV Header Cache ------------------
+let cachedHeaders: string[] | null = null;
+
+app.get("/csv-headers", async (_req, res) => {
+  try {
+    const response = await fetch("http://localhost:3000/assets/energy_model_data.csv");
+    const csvText = await response.text();
+    const lines = csvText.split("\n");
+    const headers = lines[0].split(",").map(h => h.trim());
+    cachedHeaders = headers;
+    res.json({ headers });
+  } catch (err) {
+    console.error("CSV header error:", err);
+    res.status(500).json({ error: "Failed to fetch headers" });
+  }
+});
+
+// ------------------ ✅ MCP Server ------------------
+const server = new McpServer({
+  name: "bhallaServer",
+  version: "1.0.0",
+  capabilities: {
+    resources: {},
+    tools: {},
+  },
+});
+
+server.tool("list-csv-headers", {}, async () => {
+  try {
+    const response = await fetch("http://localhost:3000/csv-headers");
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+    const data = await response.json();
+    cachedHeaders = data.headers;
+
+    return {
+      content: cachedHeaders.map(header => ({
+        type: "text",
+        text: header,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching headers:", error);
+    return {
+      content: [{ type: "text", text: "Failed to load CSV headers." }],
+    };
+  }
+});
+
+server.tool(
+  "set-graph-axes",
+  {
+    xParams: z.array(z.string()).describe("X-axis columns"),
+    yParams: z.array(z.string()).describe("Y-axis columns"),
+  },
+  async ({ xParams, yParams }) => {
+    try {
+      if (!cachedHeaders) {
+        const response = await fetch("http://localhost:3000/csv-headers");
+        const data = await response.json();
+        cachedHeaders = data.headers;
+      }
+
+      const validX = xParams.filter(x => cachedHeaders!.includes(x));
+      const validY = yParams.filter(y => cachedHeaders!.includes(y));
+
+      if (validX.length === 0 && validY.length === 0) {
+        return {
+          content: [{ type: "text", text: "No valid axes selected." }],
+        };
+      }
+
+      // Push to frontend polling queue
+      pushCommand("plotGraph", { xCols: validX, yCols: validY });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Set X-axis: [${validX.join(", ")}], Y-axis: [${validY.join(", ")}]`,
+          },
+        ],
+      };
+    } catch (err) {
+      console.error("Error setting axes:", err);
+      return {
+        content: [{ type: "text", text: "Failed to set axes." }],
+      };
+    }
+  }
+);
+
+// ------------------ ✅ Start MCP + Express ------------------
+
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("MCP Server running on stdio");
+
+  app.listen(PORT, () => {
+    console.log(`Express server listening at http://localhost:${PORT}`);
+  });
+}
+
+main().catch((err) => {
+  console.error("Startup error:", err);
+  process.exit(1);
+});

@@ -14,7 +14,7 @@ export class MCPClient {
     messages = [
         {
             role: "system",
-            content: "You are a helpful assistant connected to tools.",
+            content: "You are a helpful assistant connected to tools. Do not call graph tool until you have obtained the headers",
         },
     ];
     mcp;

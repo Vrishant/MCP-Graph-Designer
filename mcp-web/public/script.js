@@ -395,5 +395,5 @@ function updateAxisInputs(xParams, yParams) {
 document.addEventListener("DOMContentLoaded", () => {
   loadCsv();
   pollForInputParams();
-  pollForMoveCommands(); // optional
+  // pollForMoveCommands(); // optional
 });

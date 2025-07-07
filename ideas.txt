@@ -1,0 +1,105 @@
+Staying within the Limit
+
+import { encode } from "gpt-3-encoder";  // You may need to install 'gpt-3-encoder' for encoding tokens
+
+class MCPClient {
+  private messages: ChatCompletionMessageParam[] = [
+    { role: "system", content: "You are a helpful assistant connected to tools." },
+  ];
+
+  // Define max tokens (you can adjust this based on the model you're using)
+  private MAX_TOKENS = 3000; // Token limit for your messages history
+
+  // Function to calculate token count
+  private calculateTokens(messages: ChatCompletionMessageParam[]): number {
+    let tokenCount = 0;
+    for (const msg of messages) {
+      tokenCount += encode(msg.content).length;
+    }
+    return tokenCount;
+  }
+
+  // Trim messages based on token count
+  private trimMessages(messages: ChatCompletionMessageParam[], maxTokens: number = this.MAX_TOKENS) {
+    let tokenCount = this.calculateTokens(messages);
+
+    // Trim the history until we stay within the token limit
+    while (tokenCount > maxTokens && messages.length > 1) { // Keep at least the system message
+      messages.shift(); // Remove the oldest message
+      tokenCount = this.calculateTokens(messages);
+    }
+
+    return messages;
+  }
+
+  async processQuery(query: string) {
+    this.messages.push({ role: "user", content: query });
+
+    // Trim the messages before making a call
+    this.messages = this.trimMessages(this.messages);
+
+    const completion = await this.openai.chat.completions.create({
+      model: "gpt-4-o-mini", // Or another model of choice
+      messages: this.messages,
+      tools: this.tools,
+      max_tokens: 500,
+      tool_choice_
+
+
+Manual Pre-call at connectToServer()
+async fetchInitialHeaders() {
+  const toolName = "get_headers"; // your tool's name
+  const result = await this.mcp.callTool({
+    name: toolName,
+    arguments: {}, // or any required default args
+  });
+
+  const toolContent = JSON.stringify(result.content);
+  const truncatedContent = toolContent.length > 1000
+    ? toolContent.slice(0, 1000) + "... [truncated]"
+    : toolContent;
+
+  this.messages.push({
+    role: "tool",
+    tool_call_id: "init-headers", // dummy ID, since not called from assistant
+    content: truncatedContent,
+  });
+
+  console.log("[Initial Headers Loaded]");
+}
+
+Use System Prompt to Trigger Tool Call Automatically
+private messages: ChatCompletionMessageParam[] = [
+  {
+    role: "system",
+    content: `
+      You are a helpful assistant connected to tools.
+      Before answering user questions, always request the 'get_headers' tool to retrieve necessary header information.
+      Do not answer until you have obtained and processed the headers.
+    `,
+  },
+];
+
+Inject headers to the convo 
+this.messages.push({
+  role: "system",
+  content: `Document headers: ${formattedHeaders}`,
+});
+
+
+Hybrid: Detect and Handle First-Time Queries
+Track whether the first query has run, and force a headers tool call before that.
+
+ts
+Copy
+Edit
+private isFirstQuery = true;
+
+async processQuery(query: string) {
+  if (this.isFirstQuery) {
+    await this.fetchInitialHeaders();
+    this.isFirstQuery = false;
+  }
+
+  // Proceed as normal
+}

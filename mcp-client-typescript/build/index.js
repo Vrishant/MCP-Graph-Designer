@@ -11,6 +11,12 @@ if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set");
 }
 export class MCPClient {
+    messages = [
+        {
+            role: "system",
+            content: "You are a helpful assistant connected to tools.",
+        },
+    ];
     mcp;
     openai;
     transport = null;
@@ -20,6 +26,14 @@ export class MCPClient {
             apiKey: OPENAI_API_KEY,
         });
         this.mcp = new Client({ name: "mcp-openai-client", version: "1.0.0" });
+    }
+    reset() {
+        this.messages = [
+            {
+                role: "system",
+                content: `You are a helpful assistant connected to tools. Do not answer until you have obtained the headers.`,
+            },
+        ];
     }
     async connectToServer(serverScriptPath) {
         const isJs = serverScriptPath.endsWith(".js");
@@ -54,15 +68,23 @@ export class MCPClient {
         return [...sysMsgs, ...rest];
     }
     async processQuery(query) {
-        let messages = [
-            {
-                role: "user",
-                content: query,
-            },
-        ];
+        if (query.trim().toLowerCase() === "reset") {
+            this.reset();
+            return "Conversation history has been reset.";
+        }
+        this.messages.push({
+            role: "user",
+            content: query,
+        });
+        // let messages: ChatCompletionMessageParam[] = [
+        //   {
+        //     role: "user",
+        //     content: query,
+        //   },
+        // ];
         const completion = await this.openai.chat.completions.create({
             model: "gpt-4o-mini", // Or "gpt-4-turbo" / "gpt-3.5-turbo"
-            messages,
+            messages: this.messages,
             tools: this.tools,
             max_tokens: 500,
             tool_choice: "auto",
@@ -89,24 +111,28 @@ export class MCPClient {
                 else {
                     finalText.push(String(result.content)); // fallback
                 }
-                messages.push(responseMessage);
+                this.messages.push(responseMessage);
                 const toolContent = JSON.stringify(result.content);
                 const truncatedToolContent = toolContent.length > 1000
                     ? toolContent.slice(0, 1000) + "... [truncated]"
                     : toolContent;
-                messages.push({
+                this.messages.push({
                     role: "tool",
                     tool_call_id: toolCall.id,
                     content: truncatedToolContent,
                 });
-                messages = this.trimMessages(messages);
+                this.messages = this.trimMessages(this.messages);
                 const secondResponse = await this.openai.chat.completions.create({
                     model: "gpt-4o-mini",
-                    messages,
+                    messages: this.messages,
                     max_tokens: 500,
                 });
                 const finalResponse = secondResponse.choices[0].message;
+                // if (finalResponse.content) {
+                //   finalText.push(finalResponse.content);
+                // }
                 if (finalResponse.content) {
+                    this.messages.push(finalResponse); // store final reply too
                     finalText.push(finalResponse.content);
                 }
             }

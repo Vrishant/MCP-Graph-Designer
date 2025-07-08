@@ -2,10 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const { mcpClient } = require("./mcp/mcp-client.js");
 
-
-
-let latestAxisParams = null;
-
 const app = express();
 const port = 3100;
 const MCP_SERVER_SCRIPT = "./mcp/mcp-tool.js";
@@ -17,8 +13,7 @@ app.use(express.json());
 
 async function startMCPClient() {
   // mcpClient = new MCPClient();
-  
- 
+
   try {
     await mcpClient.connectToServer(MCP_SERVER_SCRIPT);
     console.log("MCP Client connected to server");
@@ -34,18 +29,19 @@ app.post("/query", async (req, res) => {
   }
 
   const body = req.body;
-
   if (!body || !body.query || typeof body.query !== "string") {
     return res.status(400).json({ error: "Invalid request body" });
   }
   const query = body.query;
+  const data= body.data;
 
   if (!query || typeof query !== "string") {
     return res.status(400).json({ error: "Invalid query" });
   }
   console.log("Received query:", query);
+  console.log("Recieved data:", data);
   try {
-    const response = await mcpClient.processQuery(query);
+    const response = await mcpClient.processQuery(body);
     const responseText =
       typeof response === "string" ? response : JSON.stringify(response);
     res.json({ response: responseText });

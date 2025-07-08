@@ -18,7 +18,7 @@ class MCPClient {
     {
       role: "system",
       content:
-        "You are a helpful assistant connected to tools. Do not call graph tool until you have obtained the headers",
+        "You are a helpful assistant connected to tools. You help user using suggestion tools. Always check the dataset at the beginning.",
     },
   ];
   mcp;
@@ -40,7 +40,7 @@ class MCPClient {
     this.messages = [
       {
         role: "system",
-        content: `You are a helpful assistant connected to tools. Do not call graph tool until you have obtained the headers.`,
+        content: `You are a helpful assistant connected to tools. You help user using suggestion tools. Always check the dataset at the beginning.`,
       },
     ];
   }
@@ -81,7 +81,9 @@ class MCPClient {
       .slice(-maxMessages);
     return [...sysMsgs, ...rest];
   }
-  async processQuery(query) {
+  async processQuery(body) {
+    const bodyData=body.data;
+    const query=body.query;
     if (query.trim().toLowerCase() === "reset") {
       this.reset();
       return "Conversation history has been reset.";
@@ -104,22 +106,26 @@ class MCPClient {
       for (const toolCall of toolCalls) {
         const toolName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments || "{}");
+        const toolsNeedingBodyData = new Set(["list-headers"]);
+        if (toolsNeedingBodyData.has(toolName)) {
+          args.bodyData = Object.keys(bodyData);
+        }
+
         console.log(`Calling tool: ${toolName} with args:`, args);
+
         const result = await this.mcp.callTool({
           name: toolName,
           arguments: args,
         });
+
         const toolContent = JSON.stringify(result.content);
-        const truncatedToolContent =
-          toolContent.length > 1000
-            ? toolContent.slice(0, 1000) + "... [truncated]"
-            : toolContent;
         this.messages.push({
           role: "tool",
           tool_call_id: toolCall.id,
-          content: truncatedToolContent,
+          content: toolContent,
         });
       }
+
       this.messages = this.trimMessages(this.messages);
       response = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -140,6 +146,21 @@ class MCPClient {
   async cleanup() {
     await this.mcp.close();
   }
+
+  // New method to call tool with body.data directly
+  // async callToolWithBodyData(toolName, bodyData) {
+  //   try {
+  //     const result = await this.mcp.callTool({
+  //       name: toolName,
+  //       arguments: { data: bodyData },
+  //     });
+  //     console.log(`Tool ${toolName} response:`, result);
+  //     return result;
+  //   } catch (error) {
+  //     console.error(`Error calling tool ${toolName} with body.data:`, error);
+  //     throw error;
+  //   }
+  // }
 }
 
 var mcpClient;

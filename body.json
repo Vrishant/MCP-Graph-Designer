@@ -1,0 +1,41 @@
+{
+    "query": "",
+    "data": {
+        "commodity": [
+        "Electricity", "Coal", "Gas", "Oil", "Solar", "Wind", "Hydro", "Biomass", "Geothermal", "Nuclear", "Hydrogen", "Biofuel"
+        ],
+        "process": [
+        "GEN_COAL", "GEN_SOLAR", "GEN_WIND", "GEN_HYDRO", "GEN_GAS", "GEN_NUCLEAR",
+        "TRANS_GAS", "TRANS_OIL", "STORAGE_BATTERY", "STORAGE_HYDRO", "REFINE_OIL", "IMPORT_ELECTRICITY"
+        ],
+        "year": [
+        2015, 2020,
+        2025, 2030,
+        2035, 2040,
+        2045, 2050,
+        2055, 2060
+        ],
+        "timeslice": [
+        "ANNUAL", "DAY", "NIGHT", "PEAK", "OFFPEAK", "SPRING", "SUMMER", "FALL", "WINTER",
+        "WEEKDAY", "WEEKEND", "HOLIDAY"
+        ],
+        "scenario": [
+        "Base", "HighDemand", "LowCarbon", "BusinessAsUsual", "GreenTransition", "FossilFuture",
+        "TechBreakthrough", "PolicyShift", "NoPolicy", "CarbonTax", "ExportGrowth", "LocalFocus"
+        ],
+        "region": [
+        "NA", "EU", "ASIA", "AFRICA", "LATAM", "OCEANIA", "ME", "RUSSIA", "INDIA", "CHINA", "US", "BRAZIL"
+        ],
+        "unit": [
+        "GWh", "TWh", "PJ", "ktoe", "MW", "GW", "MtCO2", "kg", "MWh", "liters", "barrels", "USD"
+        ],
+        "varbl": [
+        "Production", "Consumption", "Capacity", "Emission", "Import", "Export", "Losses",
+        "Investment", "O&M Cost", "Storage Level", "Curtailment", "Fuel Use"
+        ],
+        "attribute": [
+        "Total", "Average", "Max", "Min", "Median", "StdDev", "Cumulative", "Normalized",
+        "Indexed", "Adjusted", "Forecast", "Observed"
+        ]
+    }
+}

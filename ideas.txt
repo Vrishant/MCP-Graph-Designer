@@ -109,10 +109,7 @@ async processQuery(query: string) {
 ✅ Step-by-step Implementation
 🔹 1. Create a static dataset dictionary (column glossary):
 Create a file called datasetGlossary.ts:
-
-ts
-Copy
-Edit
+ 
 export const datasetGlossary = {
   "Energy Consumption": "Total energy used by the company annually (in MWh)",
   "Year": "Fiscal year of the data entry",
@@ -123,9 +120,6 @@ export const datasetGlossary = {
 🔹 2. Inject it into the MCP agent during server init
 In your McpServer definition (McpServer.ts), add a comment block as part of the startup context:
 
-ts
-Copy
-Edit
 import { datasetGlossary } from "./datasetGlossary";
 
 const glossaryNote = Object.entries(datasetGlossary)
@@ -145,7 +139,4 @@ When interpreting user queries, always map terms to the closest column names fro
 🔹 3. (Optional) Add aliases to improve robustness
 If your users say "power usage" instead of "Energy Consumption", add those mappings into the glossary (or a helper function). You don't need a tool — just teach the agent that in the system string:
 
-ts
-Copy
-Edit
 - **Energy Consumption**: Also referred to as "power usage", "total usage", or "MWh used"

@@ -103,3 +103,49 @@ async processQuery(query: string) {
 
   // Proceed as normal
 }
+
+
+
+✅ Step-by-step Implementation
+🔹 1. Create a static dataset dictionary (column glossary):
+Create a file called datasetGlossary.ts:
+
+ts
+Copy
+Edit
+export const datasetGlossary = {
+  "Energy Consumption": "Total energy used by the company annually (in MWh)",
+  "Year": "Fiscal year of the data entry",
+  "Region": "Geographic region of the report (e.g., North, South, etc.)",
+  "EC_Y2022": "Energy consumption for 2022 (legacy column name)",
+  // Add more variables with aliases if needed
+};
+🔹 2. Inject it into the MCP agent during server init
+In your McpServer definition (McpServer.ts), add a comment block as part of the startup context:
+
+ts
+Copy
+Edit
+import { datasetGlossary } from "./datasetGlossary";
+
+const glossaryNote = Object.entries(datasetGlossary)
+  .map(([col, desc]) => `- **${col}**: ${desc}`)
+  .join("\n");
+
+const server = new McpServer({
+  name: "bhallaServer",
+  version: "1.0.0",
+  capabilities: {
+    resources: {},
+    tools: {},
+  },
+  system: `You are a company-specific assistant trained on the following dataset structure:\n${glossaryNote}\n
+When interpreting user queries, always map terms to the closest column names from this list.`,
+});
+🔹 3. (Optional) Add aliases to improve robustness
+If your users say "power usage" instead of "Energy Consumption", add those mappings into the glossary (or a helper function). You don't need a tool — just teach the agent that in the system string:
+
+ts
+Copy
+Edit
+- **Energy Consumption**: Also referred to as "power usage", "total usage", or "MWh used"

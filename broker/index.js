@@ -32,14 +32,15 @@ app.post("/query", async (req, res) => {
   if (!body || !body.query || typeof body.query !== "string") {
     return res.status(400).json({ error: "Invalid request body" });
   }
+
   const query = body.query;
   const data= body.data;
 
   if (!query || typeof query !== "string") {
     return res.status(400).json({ error: "Invalid query" });
   }
-  console.log("Received query:", query);
-  console.log("Recieved data:", data);
+  // console.log("Received query:", query);
+  // console.log("Recieved data:", data);
   try {
     const response = await mcpClient.processQuery(body);
     const responseText =

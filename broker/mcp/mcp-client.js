@@ -81,9 +81,10 @@ class MCPClient {
       .slice(-maxMessages);
     return [...sysMsgs, ...rest];
   }
-  async processQuery(body) {
-    const bodyData=body.data;
-    const query=body.query;
+  async processQuery(BD) {
+    console.log("Recieved Body Data:",BD);
+    const bodyData=BD.data;
+    const query=BD.query;
     if (query.trim().toLowerCase() === "reset") {
       this.reset();
       return "Conversation history has been reset.";
@@ -106,9 +107,9 @@ class MCPClient {
       for (const toolCall of toolCalls) {
         const toolName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments || "{}");
-        const toolsNeedingBodyData = new Set(["list-headers"]);
+        const toolsNeedingBodyData = new Set(["list-headers", "list-subheaders"]);
         if (toolsNeedingBodyData.has(toolName)) {
-          args.bodyData = Object.keys(bodyData);
+          args.bodyData = bodyData;
         }
 
         console.log(`Calling tool: ${toolName} with args:`, args);

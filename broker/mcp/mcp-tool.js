@@ -11,46 +11,12 @@ const server = new McpServer({
   },
 });
 
-
-
-// server.tool("list-headers", {}, async () => {
-//   try {
-//     const headers = [
-//       "commodity",
-//       "process",
-//       "year",
-//       "timeslice",
-//       "scenario",
-//       "region",
-//       "unit",
-//       "varbl",
-//       "attribute",
-//     ];
-//     cachedHeaders = headers; // store in cache
-//     console.log(headers);
-//     return {
-//       content: headers.map((header) => ({
-//         type: "text",
-//         text: header,
-//       })),
-//     };
-//   } catch (error) {
-//     console.error("Error fetching csv headers:", error);
-//     return {
-//       content: [
-//         {
-//           type: "text",
-//           text: "Failed to load CSV headers.",
-//         },
-//       ],
-//     };
-//   }
-// });
-
-
 server.tool(
   "list-headers",
-  {},
+  "Availible headers to be placed in rows and columns",
+  {
+    bodyData: z.record(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe("Leave this empty while calling for data")
+  },
   async ({ bodyData }) => {
     try {
       const headers = Object.keys(bodyData);
@@ -104,6 +70,48 @@ server.tool("suggest-inputs", {
       };
   }
 });
+
+
+server.tool(
+  "list-subheaders",
+  "Returns subheaders for a given header name",
+  {
+    headerName: z.string().describe("Name of the header to get subheaders for"),
+    bodyData: z.record(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe("Leave this empty while calling for data")
+  },
+  async ({ headerName, bodyData }) => {
+    try {
+      const subheaders = bodyData[headerName];
+      if (!subheaders) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No subheaders found for header: ${headerName}`,
+            },
+          ],
+        };
+      }
+      return {
+        content: subheaders.map((subheader) => ({
+          type: "text",
+          text: subheader.toString(),
+        })),
+      };
+    } catch (error) {
+      console.error("Error fetching subheaders:", error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to fetch subheaders.",
+          },
+        ],
+      };
+    }
+  }
+);
+
 
 async function main() {
   const transport = new StdioServerTransport();

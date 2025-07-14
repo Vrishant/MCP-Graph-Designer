@@ -84,6 +84,7 @@ class MCPClient {
       "Connected to server with tools:",
       this.tools.map((t) => t.function.name)
     );
+    console.log("Using the User API key to interact with the server");
   }
   trimMessages(messages, maxMessages = 10) {
     const sysMsgs = messages.filter((m) => m.role === "system");

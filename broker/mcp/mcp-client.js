@@ -27,10 +27,13 @@ class MCPClient {
   openai;
   transport = null;
   tools = [];
-  constructor() {
+  constructor(userApiKey) {
+    if (!userApiKey) {
+      throw new Error("User API key is required for MCPClient.");
+    }
     try {
       this.openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
+        apiKey: userApiKey,
       });
 
       this.mcp = new Client({ name: "mcp-openai-client", version: "1.0.0" });

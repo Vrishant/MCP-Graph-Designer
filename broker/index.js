@@ -25,10 +25,10 @@ function getNow() {
 //   return sessions.get(sessionId);
 // }
 
-async function getClientForSession(sessionId) {
+async function getClientForSession(sessionId, userApiKey) {
   let session = sessions.get(sessionId);
   if (!session) {
-    const client = new MCPClient();
+    const client = new MCPClient(userApiKey);
     await client.connectToServer(MCP_SERVER_SCRIPT);
     session = { client, lastUsed: getNow() };
     sessions.set(sessionId, session);
@@ -51,10 +51,11 @@ setInterval(async () => {
 }, 60 * 1000); // check every 60 seconds
 
 app.post("/query", async (req, res) => {
-  const sessionId = req.headers["x-session-id"]; // or req.body.sessionId or cookie
+  const sessionId = req.headers["x-session-id"]; 
+  const userApiKey = req.headers["x-api-key"];
 
-  if (!sessionId) {
-    return res.status(400).json({ error: "Session ID is required" });
+  if (!sessionId || !userApiKey) {
+    return res.status(400).json({ error: "Session ID and API key are required" });
   }
 
   const body = req.body;
@@ -63,7 +64,7 @@ app.post("/query", async (req, res) => {
   }
 
   try {
-    const client = await getClientForSession(sessionId);
+    const client = await getClientForSession(sessionId, userApiKey);
     const response = await client.processQuery(body);
     const responseText =
       typeof response === "string" ? response : JSON.stringify(response);

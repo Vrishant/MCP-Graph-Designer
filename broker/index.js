@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { mcpClient } = require("./mcp/mcp-client.js");
+const { MCPClient } = require("./mcp/mcp-client.js");
 
 const app = express();
 const port = 3100;
@@ -9,23 +9,52 @@ const MCP_SERVER_SCRIPT = "./mcp/mcp-tool.js";
 app.use(cors());
 app.use(express.json());
 
-// let mcpClient = mcpClient;
+const sessions = new Map();
 
-async function startMCPClient() {
-  // mcpClient = new MCPClient();
 
-  try {
-    await mcpClient.connectToServer(MCP_SERVER_SCRIPT);
-    console.log("MCP Client connected to server");
-  } catch (err) {
-    console.error("Failed to connect MCP Client to server:", err);
-    process.exit(1);
-  }
+function getNow() {
+  return Date.now();
 }
 
+// async function getClientForSession(sessionId) {
+//   if (!sessions.has(sessionId)) {
+//     const client = new MCPClient();
+//     await client.connectToServer(MCP_SERVER_SCRIPT);
+//     sessions.set(sessionId, client);
+//   }
+//   return sessions.get(sessionId);
+// }
+
+async function getClientForSession(sessionId) {
+  let session = sessions.get(sessionId);
+  if (!session) {
+    const client = new MCPClient();
+    await client.connectToServer(MCP_SERVER_SCRIPT);
+    session = { client, lastUsed: getNow() };
+    sessions.set(sessionId, session);
+  } else {
+    session.lastUsed = getNow(); // Update usage timestamp
+  }
+  return session.client;
+}
+
+setInterval(async () => {
+  const now = getNow();
+  const maxIdleMs = 10 * 60 * 1000; // 10 minutes
+  for (const [sessionId, session] of sessions.entries()) {
+    if (now - session.lastUsed > maxIdleMs) {
+      console.log(`Cleaning up idle session: ${sessionId}`);
+      await session.client.cleanup(); // Disconnect
+      sessions.delete(sessionId);
+    }
+  }
+}, 60 * 1000); // check every 60 seconds
+
 app.post("/query", async (req, res) => {
-  if (!mcpClient) {
-    return res.status(500).json({ error: "MCP Client not initialized" });
+  const sessionId = req.headers["x-session-id"]; // or req.body.sessionId or cookie
+
+  if (!sessionId) {
+    return res.status(400).json({ error: "Session ID is required" });
   }
 
   const body = req.body;
@@ -33,16 +62,9 @@ app.post("/query", async (req, res) => {
     return res.status(400).json({ error: "Invalid request body" });
   }
 
-  const query = body.query;
-  const data= body.data;
-
-  if (!query || typeof query !== "string") {
-    return res.status(400).json({ error: "Invalid query" });
-  }
-  // console.log("Received query:", query);
-  // console.log("Recieved data:", data);
   try {
-    const response = await mcpClient.processQuery(body);
+    const client = await getClientForSession(sessionId);
+    const response = await client.processQuery(body);
     const responseText =
       typeof response === "string" ? response : JSON.stringify(response);
     res.json({ response: responseText });
@@ -54,5 +76,4 @@ app.post("/query", async (req, res) => {
 
 app.listen(port, () => {
   console.log(`MCP Web backend listening at http://localhost:${port}`);
-  startMCPClient();
 });

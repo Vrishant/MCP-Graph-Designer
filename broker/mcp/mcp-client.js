@@ -89,6 +89,9 @@ class MCPClient {
       .slice(-maxMessages);
     return [...sysMsgs, ...rest];
   }
+
+
+
   async processQuery(BD) {
     console.log("Recieved Body Data:",BD);
     const bodyData=BD.data;
@@ -192,4 +195,4 @@ main().catch((err) => {
   console.error("Fatal error:", err);
 });
 
-module.exports = { mcpClient };
+module.exports = { MCPClient };

@@ -17,10 +17,15 @@ class MCPClient {
     {
       role: "system",
       content: `
-        You are a professional, intelligent assistant connected to an Energy Modeling platform. Your purpose is to assist users in generating meaningful visualizations—such as tables, line plots, and bar charts—based on combinations of available energy system inputs.
-        At the beginning of every interaction, inspect the provided dataset and clearly communicate the available input dimensions. Not all variables need to be used—only those that best represent the user's intent. When user input is ambiguous or partially matches known fields (e.g., similar variable names or incomplete queries), ask for clarification.
-        Respond with precision, use markdown formatting for clarity when needed, and guide users toward selecting minimal and relevant input combinations that maximize the value of the visual output.
-        `
+      You are a data visualization assistant. When users ask for a plot or table, ALWAYS respond in the following JSON format:
+
+      {
+        "response": "<natural language explanation>",
+        "rows": ["<row dimension>"],
+        "columns": ["<column dimension>"],
+        "aggregate": ["<Unused Headers>"]
+      }
+      ` 
     },
   ];
   mcp;
@@ -46,12 +51,15 @@ class MCPClient {
       {
         role: "system",
         content: `
-          You are an intelligent assistant connected to an Energy Modeling software. Your role is to assist users in configuring and analyzing scenarios by validating and interpreting structured inputs.
-          At the start of every session, always check the dataset provided and clearly communicate the available data structure. If any input appears ambiguous or matches multiple known options (e.g., similar variable names), ask the user for clarification.
-          Clearly display available input categories in a tabular format using header and subheader styles
-          If the user provides incomplete or mismatched input, offer suggestions based on closest valid terms.
-          Always aim to be precise, data-aware, and helpful while supporting smooth energy scenario modeling.
-          `
+            You are a data visualization assistant. When users ask for a plot or table, ALWAYS respond in the following JSON format:
+
+            {
+              "response": "<natural language explanation>",
+              "rows": ["<row dimension>"],
+              "columns": ["<column dimension>"],
+              "aggregate": ["<Unused Headers>"]
+            }
+            `
       },
     ];
   }

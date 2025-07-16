@@ -25,10 +25,10 @@ function getNow() {
 //   return sessions.get(sessionId);
 // }
 
-async function getClientForSession(sessionId, userApiKey) {
+async function getClientForSession(sessionId) {
   let session = sessions.get(sessionId);
   if (!session) {
-    const client = new MCPClient(userApiKey);
+    const client = new MCPClient();
     await client.connectToServer(MCP_SERVER_SCRIPT);
     session = { client, lastUsed: getNow() };
     sessions.set(sessionId, session);
@@ -51,11 +51,9 @@ setInterval(async () => {
 }, 60 * 1000); // check every 60 seconds
 
 app.post("/query", async (req, res) => {
-  const sessionId = req.headers["x-session-id"]; 
-  const userApiKey = req.headers["x-api-key"];
-
-  if (!sessionId || !userApiKey) {
-    return res.status(400).json({ error: "Session ID and API key are required" });
+  const sessionId = req.headers["x-session-id"];
+  if (!sessionId) {
+    return res.status(400).json({ error: "Session ID is required" });
   }
 
   const body = req.body;
@@ -64,11 +62,16 @@ app.post("/query", async (req, res) => {
   }
 
   try {
-    const client = await getClientForSession(sessionId, userApiKey);
+    const client = await getClientForSession(sessionId);
     const response = await client.processQuery(body);
-    const responseText =
-      typeof response === "string" ? response : JSON.stringify(response);
-    res.json({ response: responseText });
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(response);
+    } catch (parseError) {
+      console.error("Error parsing response JSON:", parseError);
+      return res.status(500).json({ error: "Invalid JSON response from MCPClient" });
+    }
+    res.json(jsonResponse);
   } catch (err) {
     console.error("Error processing query:", err);
     res.status(500).json({ error: "Error processing query" });
@@ -78,3 +81,4 @@ app.post("/query", async (req, res) => {
 app.listen(port, () => {
   console.log(`MCP Web backend listening at http://localhost:${port}`);
 });
+  

@@ -1,12 +1,8 @@
+const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const {
-  McpServer
-} = require("@modelcontextprotocol/sdk/server/mcp.js");
-const {
-  StdioServerTransport
+  StdioServerTransport,
 } = require("@modelcontextprotocol/sdk/server/stdio.js");
-const {
-  z
-} = require("zod");
+const { z } = require("zod");
 
 const server = new McpServer({
   name: "bhallaServer",
@@ -19,9 +15,11 @@ const server = new McpServer({
 
 server.tool(
   "expose-dataset",
-  "Use this to see all the avaible data to the user", 
+  "Use this to see all the avaible data to the user",
   {
-    bodyData: z.record(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe("Leave this empty while calling for data")
+    bodyData: z
+      .record(z.array(z.union([z.string(), z.number(), z.boolean()])))
+      .describe("Leave this empty while calling for data"),
   },
   async ({ bodyData }) => {
     try {
@@ -30,18 +28,22 @@ server.tool(
         .join("\n");
 
       return {
-        content: [{
-          type: "text",
-          text: `**📊 Available Dataset Dimensions:**\n\n${formattedText}`,
-        }, ],
+        content: [
+          {
+            type: "text",
+            text: `**📊 Available Dataset Dimensions:**\n\n${formattedText}`,
+          },
+        ],
       };
     } catch (err) {
       console.error("Error in expose-dataset tool:", err);
       return {
-        content: [{
-          type: "text",
-          text: "❌ Failed to expose dataset. Please try again.",
-        }, ],
+        content: [
+          {
+            type: "text",
+            text: "❌ Failed to expose dataset. Please try again.",
+          },
+        ],
       };
     }
   }
@@ -49,8 +51,11 @@ server.tool(
 
 server.tool(
   "list-headers",
-  "Availible headers to be placed in rows and columns", {
-    bodyData: z.record(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe("Leave this empty while calling for data")
+  "Availible headers to be placed in rows and columns",
+  {
+    bodyData: z
+      .record(z.array(z.union([z.string(), z.number(), z.boolean()])))
+      .describe("Leave this empty while calling for data"),
   },
   async ({ bodyData }) => {
     try {
@@ -66,10 +71,12 @@ server.tool(
     } catch (error) {
       console.error("Error extracting headers from bodyData:", error);
       return {
-        content: [{
-          type: "text",
-          text: "Failed to extract headers from input.",
-        }, ],
+        content: [
+          {
+            type: "text",
+            text: "Failed to extract headers from input.",
+          },
+        ],
       };
     }
   }
@@ -102,79 +109,84 @@ server.tool(
 //   }
 // });
 
-server.tool("define-format",
-  "Defines a specific format for the comaprison graph",
-  {},
-  async () => {
-    try {
-      return {
-        content: [{
-          type: "text",
-          text: `The correct format for a comparison graph typically includes the following components:
+// server.tool("define-format",
+//   "Defines a specific format for the comaprison graph",
+//   {},
+//   async () => {
+//     try {
+//       return {
+//         content: [{
+//           type: "text",
+//           text: `The correct format for a comparison graph typically includes the following components:
 
-                1. Rows and Columns:
-                  - Rows represent one dimension or category.
-                  - Columns represent another dimension or category.
-                  - Each cell at the intersection of a row and column contains the data point for comparison.
+//                 1. Rows and Columns:
+//                   - Rows represent one dimension or category.
+//                   - Columns represent another dimension or category.
+//                   - Each cell at the intersection of a row and column contains the data point for comparison.
 
-                2. Headers:
-                  - The top row contains column headers describing each column category.
-                  - The first column contains row headers describing each row category.
+//                 2. Headers:
+//                   - The top row contains column headers describing each column category.
+//                   - The first column contains row headers describing each row category.
 
-                3. Subheaders (Optional):
-                  - Subheaders can be used to group related columns or rows for better organization.
+//                 3. Subheaders (Optional):
+//                   - Subheaders can be used to group related columns or rows for better organization.
 
-                4. Data Points:
-                  - Each cell contains a value (numeric, boolean, or string) representing the comparison metric.
+//                 4. Data Points:
+//                   - Each cell contains a value (numeric, boolean, or string) representing the comparison metric.
 
-                5. Metadata (Optional):
-                  - Additional information such as units, data source, or formatting instructions.
+//                 5. Metadata (Optional):
+//                   - Additional information such as units, data source, or formatting instructions.
 
-                Example format (JSON-like):
+//                 Example format (JSON-like):
 
-                {
-                  "rows": ["Category A", "Category B", "Category C"],
-                  "columns": ["Metric 1", "Metric 2", "Metric 3"],
-                  "data": [
-                    [10, 20, 30],
-                    [15, 25, 35],
-                    [20, 30, 40]
-                  ],
-                  "metadata": {
-                    "units": "units",
-                    "source": "Data source description"
-                  }
-                }
+//                 {
+//                   "rows": ["Category A", "Category B", "Category C"],
+//                   "columns": ["Metric 1", "Metric 2", "Metric 3"],
+//                   "data": [
+//                     [10, 20, 30],
+//                     [15, 25, 35],
+//                     [20, 30, 40]
+//                   ],
+//                   "metadata": {
+//                     "units": "units",
+//                     "source": "Data source description"
+//                   }
+//                 }
 
-                This format allows clear comparison across multiple dimensions and metrics.`
-        }],
-      };
-    } catch {
-      return {
-        content: [{
-          type: "text",
-          text: "Failed"
-        }],
-      };
-    }
-  }
-)
+//                 This format allows clear comparison across multiple dimensions and metrics.`
+//         }],
+//       };
+//     } catch {
+//       return {
+//         content: [{
+//           type: "text",
+//           text: "Failed"
+//         }],
+//       };
+//     }
+//   }
+// )
 
 server.tool(
   "list-subheaders",
-  "Returns subheaders for a given header name", {
+  "Returns subheaders for a given header name",
+  {
     headerName: z.string().describe("Name of the header to get subheaders for"),
-    bodyData: z.record(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe("Leave this empty while calling for data")
+    bodyData: z
+      .record(z.array(z.union([z.string(), z.number(), z.boolean()])))
+      .describe("Leave this empty while calling for data"),
   },
   async ({ headerName, bodyData }) => {
     try {
       const subheaders = bodyData[headerName];
       if (!subheaders) {
         return {
-          content: [{
-            type: "text",
-            text: `No subheaders found for header: ${headerName}`,
-          }, ],
+          content: [
+            {
+              type: "text",
+              text: `No subheaders found for header: ${headerName}`,
+            },
+          ],
         };
       }
       return {
@@ -186,15 +198,52 @@ server.tool(
     } catch (error) {
       console.error("Error fetching subheaders:", error);
       return {
-        content: [{
-          type: "text",
-          text: "Failed to fetch subheaders.",
-        }, ],
+        content: [
+          {
+            type: "text",
+            text: "Failed to fetch subheaders.",
+          },
+        ],
       };
     }
   }
 );
 
+server.tool(
+  "reply-to-user",
+  "Suggest the reply format",
+  {
+    response: z.string().describe("NLP explanation of the response"),
+    rows: z.array(z.string()).describe("Rows of the table to be displayed"),
+    columns: z
+      .array(z.string())
+      .describe("Columns of the table to be displayed"),
+    aggregate: z
+      .array(z.string())
+      .describe("Aggregation of the table to be displayed"),
+  },
+  async ({ response, rows, columns, aggregate }) => {
+    try {
+      const reply = {
+        response,
+        rows: rows || [],
+        columns: columns || [],
+        aggregate: aggregate || [],
+      };
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(reply),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error replying to user:", error);
+      throw new Error("Failed to reply to user.");
+    }
+  }
+);
 
 async function main() {
   const transport = new StdioServerTransport();

@@ -16,29 +16,23 @@ class MCPClient {
   messages = [
     {
       role: "system",
-      content: `
-      You are a data visualization assistant. When users ask for a plot or table, ALWAYS respond in the following JSON format:
-
-      {
-        "response": "<natural language explanation>",
-        "rows": ["<row dimension>"],
-        "columns": ["<column dimension>"],
-        "aggregate": ["<Unused Headers>"]
-      }
-      ` 
+      // "content": `You are a data visualization assistant. Irrespective of the query ALWAYS respond in the following JSON format:
+      // \n\n{\n  \"response\": \"<natural language explanation>\",\n  \"rows\": [\"<Row Headers>\"],\n  \"columns\": [\"<Column Headers>\"],\n  \"aggregate\": [\"<Unused Headers>\"]\n}\n\n
+      // Always populate the aggregate with unused headers.`
+      content: `You are a data visualisation assistant. ALWAYS Reply to the user using the JSON format from reply-to-user. With every initial request populate the aggreagate array with unused headers.`,
     },
   ];
   mcp;
   openai;
   transport = null;
   tools = [];
-  constructor(userApiKey) {
-    if (!userApiKey) {
-      throw new Error("User API key is required for MCPClient.");
-    }
+  constructor() {
+    // if (!OPENAI_API_KEY) {
+    //   throw new Error("User API key is required for MCPClient.");
+    // }
     try {
       this.openai = new OpenAI({
-        apiKey: userApiKey,
+        apiKey: OPENAI_API_KEY,
       });
 
       this.mcp = new Client({ name: "mcp-openai-client", version: "1.0.0" });
@@ -50,16 +44,7 @@ class MCPClient {
     this.messages = [
       {
         role: "system",
-        content: `
-            You are a data visualization assistant. When users ask for a plot or table, ALWAYS respond in the following JSON format:
-
-            {
-              "response": "<natural language explanation>",
-              "rows": ["<row dimension>"],
-              "columns": ["<column dimension>"],
-              "aggregate": ["<Unused Headers>"]
-            }
-            `
+        content: `You are a data visualisation assistant. ALWAYS Reply to the user using the JSON format from reply-to-user. With every initial request populate the aggreagate array with unused headers.`,
       },
     ];
   }
@@ -92,7 +77,7 @@ class MCPClient {
       "Connected to server with tools:",
       this.tools.map((t) => t.function.name)
     );
-    console.log("Using the User API key to interact with the server");
+    // console.log("Using the User API key to interact with the server");
   }
   trimMessages(messages, maxMessages = 10) {
     const sysMsgs = messages.filter((m) => m.role === "system");
@@ -102,15 +87,20 @@ class MCPClient {
     return [...sysMsgs, ...rest];
   }
 
-
-
   async processQuery(BD) {
-    console.log("Recieved Body Data:",BD);
-    const bodyData=BD.data;
-    const query=BD.query;
-    if (query.trim().toLowerCase() === "reset") {
+    // console.log("Recieved Body Data:",BD);
+    const bodyData = BD.data;
+    const query = BD.query;
+    if (query.trim().toLowerCase() == "reset") {
       this.reset();
-      return "Conversation history has been reset.";
+      var resetReply = {
+        response: "Conversation has been reset",
+        rows: [],
+        columns: [],
+        aggregate: [],
+      };
+      console.log(resetReply);
+      return JSON.stringify(resetReply);
     }
     this.messages.push({
       role: "user",
@@ -130,12 +120,16 @@ class MCPClient {
       for (const toolCall of toolCalls) {
         const toolName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments || "{}");
-        const toolsNeedingBodyData = new Set(["list-headers", "list-subheaders", "expose-dataset"]);
+        const toolsNeedingBodyData = new Set([
+          "list-headers",
+          "list-subheaders",
+          "expose-dataset",
+        ]);
         if (toolsNeedingBodyData.has(toolName)) {
           args.bodyData = bodyData;
         }
 
-        console.log(`Calling tool: ${toolName} with args:`, args);
+        console.log(`Calling tool: ${toolName}`);
 
         const result = await this.mcp.callTool({
           name: toolName,
@@ -170,21 +164,6 @@ class MCPClient {
   async cleanup() {
     await this.mcp.close();
   }
-
-  // New method to call tool with body.data directly
-  // async callToolWithBodyData(toolName, bodyData) {
-  //   try {
-  //     const result = await this.mcp.callTool({
-  //       name: toolName,
-  //       arguments: { data: bodyData },
-  //     });
-  //     console.log(`Tool ${toolName} response:`, result);
-  //     return result;
-  //   } catch (error) {
-  //     console.error(`Error calling tool ${toolName} with body.data:`, error);
-  //     throw error;
-  //   }
-  // }
 }
 
 var mcpClient;

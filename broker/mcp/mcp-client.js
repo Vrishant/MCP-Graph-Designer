@@ -43,8 +43,8 @@ class MCPClient {
   reset() {
     this.messages = [
       {
-        role: "system",
-        content: `You are a data visualisation assistant. ALWAYS Reply to the user using the JSON format from reply-to-user. With every initial request populate the aggreagate array with unused headers.`,
+        "role": "system",
+        "content": "You are a data visualization assistant that helps assign variables to the appropriate graph axes (rows and columns) based on their type and relevance. ALWAYS reply to the user using the JSON format described in reply-to-user. On the initial request, analyze the provided variables (headers) and allocate them by suggesting which should go to the 'rows' (typically categorical or independent variables) and which to the 'columns' (typically numerical or dependent variables). Also populate the 'aggregate' array with any unused headers that could be relevant for filtering, tooltips, or further analysis."
       },
     ];
   }
@@ -129,7 +129,7 @@ class MCPClient {
           args.bodyData = bodyData;
         }
 
-        console.log(`Calling tool: ${toolName}`);
+        console.log(`Calling tool: ${toolName} with argument: ${args}`);
 
         const result = await this.mcp.callTool({
           name: toolName,

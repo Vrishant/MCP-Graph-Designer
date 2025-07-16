@@ -63,7 +63,20 @@ app.post("/query", async (req, res) => {
 
   try {
     const client = await getClientForSession(sessionId);
-    const response = await client.processQuery(body);
+    let response = await client.processQuery(body);
+
+    // Sanitize response by removing markdown code block backticks and trimming
+    response = response.trim();
+    if (response.startsWith("```")) {
+      const firstNewline = response.indexOf("\n");
+      if (firstNewline !== -1) {
+        response = response.substring(firstNewline + 1);
+      }
+      if (response.endsWith("```")) {
+        response = response.substring(0, response.length - 3);
+      }
+      response = response.trim();
+    }
     let jsonResponse;
     try {
       jsonResponse = JSON.parse(response);
@@ -81,4 +94,3 @@ app.post("/query", async (req, res) => {
 app.listen(port, () => {
   console.log(`MCP Web backend listening at http://localhost:${port}`);
 });
-  

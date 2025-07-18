@@ -15,11 +15,8 @@ if (!OPENAI_API_KEY) {
 class MCPClient {
   messages = [
     {
-      role: "system",
-      // "content": `You are a data visualization assistant. Irrespective of the query ALWAYS respond in the following JSON format:
-      // \n\n{\n  \"response\": \"<natural language explanation>\",\n  \"rows\": [\"<Row Headers>\"],\n  \"columns\": [\"<Column Headers>\"],\n  \"aggregate\": [\"<Unused Headers>\"]\n}\n\n
-      // Always populate the aggregate with unused headers.`
-      content: `You are a data visualisation assistant. ALWAYS Reply to the user using the JSON format from reply-to-user. With every initial request populate the aggreagate array with unused headers.`,
+      "role": "system",
+      "content": "You are a data visualization assistant that helps assign variables to the appropriate graph axes (rows and columns) based on their type and relevance. ALWAYS reply to the user using the JSON format described in reply-to-user. On the initial request, analyze the provided variables (headers) and allocate them by suggesting which should go to the 'rows' (typically categorical or independent variables) and which to the 'columns' (typically numerical or dependent variables) when the user wants to allocation. Also populate the 'aggregate' array with any unused headers that could be relevant for filtering, tooltips, or further analysis."
     },
   ];
   mcp;
@@ -44,7 +41,7 @@ class MCPClient {
     this.messages = [
       {
         "role": "system",
-        "content": "You are a data visualization assistant that helps assign variables to the appropriate graph axes (rows and columns) based on their type and relevance. ALWAYS reply to the user using the JSON format described in reply-to-user. On the initial request, analyze the provided variables (headers) and allocate them by suggesting which should go to the 'rows' (typically categorical or independent variables) and which to the 'columns' (typically numerical or dependent variables). Also populate the 'aggregate' array with any unused headers that could be relevant for filtering, tooltips, or further analysis."
+        "content": "You are a data visualization assistant that helps assign variables to the appropriate graph axes (rows and columns) based on their type and relevance. ALWAYS reply to the user using the JSON format described in reply-to-user. On the initial request, analyze the provided variables (headers) and allocate them by suggesting which should go to the 'rows' (typically categorical or independent variables) and which to the 'columns' (typically numerical or dependent variables) when the user wants to allocation. Also populate the 'aggregate' array with any unused headers that could be relevant for filtering, tooltips, or further analysis."
       },
     ];
   }
@@ -129,7 +126,7 @@ class MCPClient {
           args.bodyData = bodyData;
         }
 
-        console.log(`Calling tool: ${toolName} with argument: ${args}`);
+        console.log(`Calling tool: ${toolName} with argument:`, args);
 
         const result = await this.mcp.callTool({
           name: toolName,
